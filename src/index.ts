@@ -1,0 +1,180 @@
+import { Hono } from 'hono';
+import { cors } from 'hono/cors';
+import { logger } from 'hono/logger';
+import { Scalar } from '@scalar/hono-api-reference';
+import { healthRoute } from './routes/health.ts';
+import { animexinRoute } from './routes/animexin.ts';
+import { streamRoute } from './routes/stream.ts';
+import { AnimexinScraper } from './scrapers/animexin.ts';
+import { extractUrl } from './extractors/index.ts';
+import { sendSuccess, sendError } from './utils/response.ts';
+import { SearchQuerySchema } from './types.ts';
+import { openApiDocument } from './openapi.ts';
+
+const app = new Hono();
+
+// Global Middlewares
+app.use('*', cors());
+app.use('*', logger());
+
+// Interactive Scalar API Documentation
+app.route(
+  '/docs',
+  Scalar.serve({
+    document: openApiDocument,
+    pageTitle: 'DeltaxApi - Interactive API Reference',
+    theme: 'moon',
+    layout: 'modern',
+  })
+);
+
+app.route(
+  '/reference',
+  Scalar.serve({
+    document: openApiDocument,
+    pageTitle: 'DeltaxApi - Interactive API Reference',
+    theme: 'moon',
+    layout: 'modern',
+  })
+);
+
+// Global raw OpenAPI 3.1 JSON specification
+app.get('/openapi.json', (c) => c.json(openApiDocument));
+
+// Root endpoint: API documentation & metadata (or redirect browser to Scalar)
+app.get('/', (c) => {
+  const accept = c.req.header('Accept') || '';
+  if (accept.includes('text/html')) {
+    return c.redirect('/docs');
+  }
+
+  return sendSuccess(c, {
+    name: 'DeltaxApi',
+    description: 'Donghua & Anime Scraper API for Animexin.dev',
+    domain: 'api.deltax.bond',
+    version: '1.0.0',
+    documentation: {
+      scalarDocs: 'https://api.deltax.bond/docs',
+      scalarReference: 'https://api.deltax.bond/reference',
+      openApiSchema: 'https://api.deltax.bond/openapi.json',
+      health: ['GET /v1/health', 'GET /health'],
+      streamProxy: 'GET /v1/stream/proxy?url=:mediaUrl&referer=:referer',
+      extractor: 'GET /v1/extract?url=:videoEmbedUrl',
+      search: 'GET /v1/:provider/search?q=:query&page=:page (e.g. /v1/animexin/search)',
+      animexin: {
+        popular: 'GET /v1/animexin/popular?page=:page',
+        trending: 'GET /v1/animexin/trending?page=:page',
+        latest: 'GET /v1/animexin/latest?page=:page',
+        search: 'GET /v1/animexin/search?q=:query&page=:page',
+        detail: 'GET /v1/animexin/detail/:slug',
+        episode: 'GET /v1/animexin/episode/:slug?extract=true|false',
+        schedule: 'GET /v1/animexin/schedule',
+        genres: 'GET /v1/animexin/genres',
+        byGenre: 'GET /v1/animexin/genre/:slug?page=:page',
+      },
+    },
+  });
+});
+
+// Health check endpoints
+app.route('/v1', healthRoute);
+app.route('/', healthRoute);
+
+// Provider routes
+app.route('/v1/animexin', animexinRoute);
+app.route('/v1/stream', streamRoute);
+
+// Dedicated stream extractor endpoint: GET /v1/extract?url=...
+app.get('/v1/extract', async (c) => {
+  const url = c.req.query('url')?.trim();
+  if (!url) {
+    return sendError(c, 'Query parameter "url" is required for stream extraction', 400);
+  }
+
+  try {
+    const streams = await extractUrl(url);
+    return sendSuccess(c, streams, {
+      totalResults: streams.length,
+      targetUrl: url,
+    });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Failed to extract video streams';
+    return sendError(c, msg, 500);
+  }
+});
+
+// Provider-based non-unified search
+const animexinScraper = new AnimexinScraper();
+
+async function handleProviderSearch(c: any, provider: string) {
+  const parsed = SearchQuerySchema.safeParse(c.req.query());
+  if (!parsed.success) {
+    return sendError(c, 'Invalid search parameters', 400, parsed.error.flatten().fieldErrors);
+  }
+
+  const query = parsed.data.q;
+  const page = parsed.data.page;
+
+  if (provider === 'animexin') {
+    try {
+      const res = await animexinScraper.search(query, page);
+      return sendSuccess(c, res.items, {
+        provider: 'animexin.dev',
+        query,
+        page,
+        hasNextPage: res.hasNextPage,
+        totalResults: res.items.length,
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to search Animexin';
+      return sendError(c, msg, 500);
+    }
+  }
+
+  return sendError(
+    c,
+    `Unknown provider "${provider}". Supported providers: animexin. Example: /v1/animexin/search?q=${encodeURIComponent(query)}`,
+    400
+  );
+}
+
+// GET /v1/:provider/search?q=:query&page=:page
+app.get('/v1/:provider/search', async (c) => {
+  const provider = c.req.param('provider').toLowerCase();
+  return handleProviderSearch(c, provider);
+});
+
+// Non-unified search fallback: GET /v1/search?provider=:provider&q=:query&page=:page
+app.get('/v1/search', async (c) => {
+  const providerParam = c.req.query('provider')?.trim().toLowerCase();
+  if (!providerParam || providerParam === 'all') {
+    return sendError(
+      c,
+      'Unified search is disabled. Please specify a provider via /v1/:provider/search?q=:query (e.g., /v1/animexin/search)',
+      400
+    );
+  }
+
+  return handleProviderSearch(c, providerParam);
+});
+
+// Custom 404 handler
+app.notFound((c) => {
+  return sendError(
+    c,
+    `Endpoint not found: ${c.req.method} ${c.req.path}. Visit GET / for API documentation.`,
+    404
+  );
+});
+
+// Custom error handler
+app.onError((err, c) => {
+  console.error('Unhandled server error:', err);
+  return sendError(
+    c,
+    err instanceof Error ? err.message : 'Internal Server Error',
+    500
+  );
+});
+
+export default app;

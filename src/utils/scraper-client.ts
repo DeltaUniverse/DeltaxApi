@@ -19,15 +19,34 @@ export const DEFAULT_HEADERS = {
   'Upgrade-Insecure-Requests': '1',
 };
 
-export async function fetchHtml(url: string, timeoutMs = 15000): Promise<string> {
+export async function fetchHtml(
+  url: string,
+  timeoutMs = 15000,
+  cacheTtl?: number
+): Promise<string> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
+  const headers: Record<string, string> = { ...DEFAULT_HEADERS };
+  if (cacheTtl && cacheTtl > 0) {
+    delete headers['Cache-Control'];
+    delete headers['Pragma'];
+  }
+
+  const fetchInit: RequestInit & { cf?: Record<string, unknown> } = {
+    headers,
+    signal: controller.signal,
+  };
+
+  if (cacheTtl && cacheTtl > 0) {
+    fetchInit.cf = {
+      cacheTtl,
+      cacheEverything: true,
+    };
+  }
+
   try {
-    const res = await fetch(url, {
-      headers: DEFAULT_HEADERS,
-      signal: controller.signal,
-    });
+    const res = await fetch(url, fetchInit);
 
     if (!res.ok) {
       const errBody = await res.text().catch(() => '');

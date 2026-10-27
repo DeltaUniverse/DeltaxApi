@@ -30,7 +30,7 @@ export class AnimexinScraper {
         ? `${ANIMEXIN_BASE_URL}/`
         : `${ANIMEXIN_BASE_URL}/page/${page}/`;
 
-    const html = await fetchHtml(url);
+    const html = await fetchHtml(url, 15000, 180);
     const $ = loadCheerio(html);
     const items: AnimeItem[] = [];
 
@@ -92,7 +92,7 @@ export class AnimexinScraper {
   async getPopular(page = 1): Promise<{ items: AnimeItem[]; hasNextPage: boolean }> {
     try {
       const url = `${ANIMEXIN_BASE_URL}/anime/?order=popular&page=${page}`;
-      const html = await fetchHtml(url);
+      const html = await fetchHtml(url, 15000, 900);
       const $ = loadCheerio(html);
       const items: AnimeItem[] = [];
 
@@ -137,7 +137,7 @@ export class AnimexinScraper {
     }
 
     // Fallback: extract from homepage popular section (.popconslide or .listupd eq 0)
-    const html = await fetchHtml(ANIMEXIN_BASE_URL);
+    const html = await fetchHtml(ANIMEXIN_BASE_URL, 15000, 900);
     const $ = loadCheerio(html);
     const items: AnimeItem[] = [];
 
@@ -181,7 +181,7 @@ export class AnimexinScraper {
         ? `${ANIMEXIN_BASE_URL}/?s=${encoded}`
         : `${ANIMEXIN_BASE_URL}/page/${page}/?s=${encoded}`;
 
-    const html = await fetchHtml(url);
+    const html = await fetchHtml(url, 15000, 300);
     const $ = loadCheerio(html);
     const items: AnimeItem[] = [];
 
@@ -242,14 +242,14 @@ export class AnimexinScraper {
 
     let html = '';
     try {
-      html = await fetchHtml(targetUrl);
+      html = await fetchHtml(targetUrl, 15000, 1800);
     } catch {
       if (isIrrelevantItem('', '', cleanSlug)) {
         throw new Error(`Invalid anime slug: "${slugOrUrl}" is not an anime series`);
       }
       // Fallback to /anime/:slug/ if root path fails
       targetUrl = `${ANIMEXIN_BASE_URL}/anime/${cleanSlug}/`;
-      html = await fetchHtml(targetUrl);
+      html = await fetchHtml(targetUrl, 15000, 1800);
     }
 
     const $ = loadCheerio(html);
@@ -342,7 +342,7 @@ export class AnimexinScraper {
       targetUrl = `${ANIMEXIN_BASE_URL}/${cleanSlug}/`;
     }
 
-    const html = await fetchHtml(targetUrl);
+    const html = await fetchHtml(targetUrl, 15000, 600);
     const $ = loadCheerio(html);
 
     const title =
@@ -443,7 +443,7 @@ export class AnimexinScraper {
    */
   async getSchedule(): Promise<ScheduleDay[]> {
     const url = `${ANIMEXIN_BASE_URL}/release-date/`;
-    const html = await fetchHtml(url);
+    const html = await fetchHtml(url, 15000, 1800);
     const $ = loadCheerio(html);
 
     const schedule: ScheduleDay[] = [];
@@ -477,7 +477,7 @@ export class AnimexinScraper {
    */
   async getGenres(): Promise<GenreItem[]> {
     const url = `${ANIMEXIN_BASE_URL}/genres/`;
-    const html = await fetchHtml(url);
+    const html = await fetchHtml(url, 15000, 86400);
     const $ = loadCheerio(html);
 
     const genres: GenreItem[] = [];
@@ -511,7 +511,7 @@ export class AnimexinScraper {
         ? `${ANIMEXIN_BASE_URL}/genres/${cleanSlug}/`
         : `${ANIMEXIN_BASE_URL}/genres/${cleanSlug}/page/${page}/`;
 
-    const html = await fetchHtml(url);
+    const html = await fetchHtml(url, 15000, 900);
     const $ = loadCheerio(html);
     const items: AnimeItem[] = [];
 

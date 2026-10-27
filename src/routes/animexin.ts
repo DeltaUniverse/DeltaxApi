@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { AnimexinScraper } from '../scrapers/animexin.ts';
 import { sendSuccess, sendError } from '../utils/response.ts';
+import { edgeCache } from '../utils/cache.ts';
 import {
   SearchQuerySchema,
   PaginationQuerySchema,
@@ -33,11 +34,11 @@ const handlePopular = async (c: any) => {
   }
 };
 
-animexinRoute.get('/popular', handlePopular);
-animexinRoute.get('/trending', handlePopular);
+animexinRoute.get('/popular', edgeCache({ ttl: 900 }), handlePopular);
+animexinRoute.get('/trending', edgeCache({ ttl: 900 }), handlePopular);
 
 // GET /v1/animexin/latest?page=1
-animexinRoute.get('/latest', async (c) => {
+animexinRoute.get('/latest', edgeCache({ ttl: 180 }), async (c) => {
   const parsed = PaginationQuerySchema.safeParse(c.req.query());
   if (!parsed.success) {
     return sendError(c, 'Invalid pagination parameters', 400, parsed.error.flatten().fieldErrors);
@@ -62,7 +63,7 @@ animexinRoute.get('/latest', async (c) => {
 });
 
 // GET /v1/animexin/search?q=battle&page=1
-animexinRoute.get('/search', async (c) => {
+animexinRoute.get('/search', edgeCache({ ttl: 300 }), async (c) => {
   const parsed = SearchQuerySchema.safeParse(c.req.query());
   if (!parsed.success) {
     return sendError(c, 'Invalid search query parameters', 400, parsed.error.flatten().fieldErrors);
@@ -88,7 +89,7 @@ animexinRoute.get('/search', async (c) => {
 });
 
 // GET /v1/animexin/detail/:slug
-animexinRoute.get('/detail/:slug', async (c) => {
+animexinRoute.get('/detail/:slug', edgeCache({ ttl: 1800 }), async (c) => {
   const slug = c.req.param('slug')?.trim();
   if (!slug) {
     return sendError(c, 'Anime slug is required', 400);
@@ -104,7 +105,7 @@ animexinRoute.get('/detail/:slug', async (c) => {
 });
 
 // GET /v1/animexin/episode/:slug (supports slug or query ?url=..., ?extract=true|false)
-animexinRoute.get('/episode/:slug', async (c) => {
+animexinRoute.get('/episode/:slug', edgeCache({ ttl: 600 }), async (c) => {
   const slug = c.req.param('slug')?.trim();
   const queryUrl = c.req.query('url')?.trim();
   const target = queryUrl || slug;
@@ -124,7 +125,7 @@ animexinRoute.get('/episode/:slug', async (c) => {
 });
 
 // GET /v1/animexin/schedule
-animexinRoute.get('/schedule', async (c) => {
+animexinRoute.get('/schedule', edgeCache({ ttl: 1800 }), async (c) => {
   try {
     const schedule = await scraper.getSchedule();
     return sendSuccess(c, schedule, { provider: 'animexin.dev' });
@@ -135,7 +136,7 @@ animexinRoute.get('/schedule', async (c) => {
 });
 
 // GET /v1/animexin/genres
-animexinRoute.get('/genres', async (c) => {
+animexinRoute.get('/genres', edgeCache({ ttl: 86400 }), async (c) => {
   try {
     const genres = await scraper.getGenres();
     return sendSuccess(c, genres, { provider: 'animexin.dev', totalResults: genres.length });
@@ -146,7 +147,7 @@ animexinRoute.get('/genres', async (c) => {
 });
 
 // GET /v1/animexin/genre/:slug?page=1
-animexinRoute.get('/genre/:slug', async (c) => {
+animexinRoute.get('/genre/:slug', edgeCache({ ttl: 900 }), async (c) => {
   const slug = c.req.param('slug')?.trim();
   if (!slug) {
     return sendError(c, 'Genre slug is required', 400);

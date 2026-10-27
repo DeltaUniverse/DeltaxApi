@@ -8,8 +8,10 @@ import { streamRoute } from './routes/stream.ts';
 import { AnimexinScraper } from './scrapers/animexin.ts';
 import { extractUrl } from './extractors/index.ts';
 import { sendSuccess, sendError } from './utils/response.ts';
+import { edgeCache } from './utils/cache.ts';
 import { SearchQuerySchema } from './types.ts';
 import { openApiDocument } from './openapi.ts';
+import { champagneCustomCss } from './theme/champagne.ts';
 
 const app = new Hono();
 
@@ -17,29 +19,25 @@ const app = new Hono();
 app.use('*', cors());
 app.use('*', logger());
 
-// Interactive Scalar API Documentation
-app.route(
-  '/docs',
-  Scalar.serve({
-    document: openApiDocument,
-    pageTitle: 'DeltaxApi - Interactive API Reference',
-    theme: 'moon',
-    layout: 'modern',
-  })
-);
+// Scalar Champagne Theme Configuration
+const scalarChampagneConfig = {
+  document: openApiDocument,
+  pageTitle: 'DeltaxApi - Interactive API Reference',
+  theme: 'none' as const,
+  layout: 'modern' as const,
+  customCss: champagneCustomCss,
+  documentDownloadType: 'none' as const,
+  hideDownloadButton: true,
+  hideTestRequestButton: true,
+  withDefaultFonts: false,
+};
 
-app.route(
-  '/reference',
-  Scalar.serve({
-    document: openApiDocument,
-    pageTitle: 'DeltaxApi - Interactive API Reference',
-    theme: 'moon',
-    layout: 'modern',
-  })
-);
+// Interactive Scalar API Documentation
+app.route('/docs', Scalar.serve(scalarChampagneConfig));
+app.route('/reference', Scalar.serve(scalarChampagneConfig));
 
 // Global raw OpenAPI 3.1 JSON specification
-app.get('/openapi.json', (c) => c.json(openApiDocument));
+app.get('/openapi.json', edgeCache({ ttl: 3600 }), (c) => c.json(openApiDocument));
 
 // Root endpoint: API documentation & metadata (or redirect browser to Scalar)
 app.get('/', (c) => {
@@ -85,7 +83,7 @@ app.route('/v1/animexin', animexinRoute);
 app.route('/v1/stream', streamRoute);
 
 // Dedicated stream extractor endpoint: GET /v1/extract?url=...
-app.get('/v1/extract', async (c) => {
+app.get('/v1/extract', edgeCache({ ttl: 600 }), async (c) => {
   const url = c.req.query('url')?.trim();
   if (!url) {
     return sendError(c, 'Query parameter "url" is required for stream extraction', 400);
@@ -139,13 +137,13 @@ async function handleProviderSearch(c: any, provider: string) {
 }
 
 // GET /v1/:provider/search?q=:query&page=:page
-app.get('/v1/:provider/search', async (c) => {
+app.get('/v1/:provider/search', edgeCache({ ttl: 300 }), async (c) => {
   const provider = c.req.param('provider').toLowerCase();
   return handleProviderSearch(c, provider);
 });
 
 // Non-unified search fallback: GET /v1/search?provider=:provider&q=:query&page=:page
-app.get('/v1/search', async (c) => {
+app.get('/v1/search', edgeCache({ ttl: 300 }), async (c) => {
   const providerParam = c.req.query('provider')?.trim().toLowerCase();
   if (!providerParam || providerParam === 'all') {
     return sendError(

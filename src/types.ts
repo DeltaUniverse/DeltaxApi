@@ -23,6 +23,10 @@ export const GenreQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
 });
 
+export const CountryQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+});
+
 export const EpisodeQuerySchema = z.object({
   url: z.string().url().optional(),
 });
@@ -31,7 +35,6 @@ export const EpisodeQuerySchema = z.object({
 export interface AnimeItem {
   title: string;
   slug: string;
-  url: string;
   thumbnail: string;
   type?: string;
   status?: string;
@@ -44,7 +47,6 @@ export interface AnimeItem {
 export interface AnimeDetail {
   title: string;
   slug: string;
-  url: string;
   thumbnail: string;
   rating?: string;
   synopsis: string;
@@ -55,7 +57,6 @@ export interface AnimeDetail {
     episodeNumber: string;
     releaseDate: string;
     slug: string;
-    url: string;
   }>;
 }
 
@@ -86,20 +87,57 @@ export interface DownloadFormat {
 export interface EpisodeDetail {
   title: string;
   slug: string;
-  url: string;
   animeTitle?: string;
   animeSlug?: string;
-  animeUrl?: string;
+  dramaTitle?: string;
+  dramaSlug?: string;
   currentEpisode?: string;
+  synopsis?: string;
   defaultPlayer?: string;
   streams: StreamSource[];
   servers: VideoServer[];
   downloads: DownloadFormat[];
   navigation?: {
-    prev?: { slug: string; url: string };
-    next?: { slug: string; url: string };
-    allEpisodes?: { slug: string; url: string };
+    prev?: { slug: string };
+    next?: { slug: string };
+    allEpisodes?: { slug: string };
   };
+}
+
+export interface DramaItem {
+  title: string;
+  slug: string;
+  thumbnail: string;
+  country?: string;
+  year?: string | number;
+  genre?: string;
+  latestEpisode?: string;
+  availability?: string;
+  subType?: string;
+  status?: string;
+  type?: string;
+}
+
+export interface DramaDetail {
+  title: string;
+  alternateTitle?: string;
+  slug: string;
+  thumbnail: string;
+  synopsis: string;
+  year?: string | number;
+  country?: string;
+  format?: string;
+  status?: string;
+  rating?: string;
+  totalEpisodes?: number | string;
+  genres: string[];
+  cast: string[];
+  metadata?: Record<string, string>;
+  episodes: Array<{
+    title: string;
+    episodeNumber: string;
+    slug: string;
+  }>;
 }
 
 export interface ScheduleDay {
@@ -107,12 +145,15 @@ export interface ScheduleDay {
   animeList: Array<{
     title: string;
     slug: string;
-    url: string;
   }>;
 }
 
 export interface GenreItem {
   name: string;
   slug: string;
-  url: string;
+}
+
+export interface CountryItem {
+  name: string;
+  slug: string;
 }

@@ -2,7 +2,7 @@
 
 # DeltaxApi
 
-**Edge-native Donghua & Anime Scraper API for Animexin, featuring multi-host video stream extractors and interactive Scalar documentation.**
+**Edge-native Anime, Donghua & Asian Drama Scraper API for Animexin and DramaID, featuring multi-host video stream extractors and interactive Scalar documentation.**
 
 [![Runtime](https://img.shields.io/badge/Runtime-Cloudflare_Workers-F38020?logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
 [![Framework](https://img.shields.io/badge/Framework-Hono_v4-E36002?logo=hono&logoColor=white)](https://hono.dev/)
@@ -15,7 +15,7 @@
 
 ---
 
-DeltaxApi is an asynchronous, edge-first REST API built with Hono and deployed on Cloudflare Workers. It provides real-time content aggregation for anime and donghua from Animexin, embedded video stream resolution (Ok.ru, Dailymotion, Rumble, VidHide), a CORS-friendly media proxy, and interactive OpenAPI documentation powered by Scalar.
+DeltaxApi is an asynchronous, edge-first REST API built with Hono and deployed on Cloudflare Workers. It provides real-time content aggregation for anime, donghua, and Asian dramas from Animexin and DramaID (`dramaid.nimegami.id`), embedded video stream resolution (DramaID MP4s, Ok.ru multi-quality MP4s, Dailymotion master HLS `.m3u8` playlists, and unpacked P.A.C.K.E.R. sources), a CORS-friendly media proxy, and interactive OpenAPI documentation powered by Scalar.
 
 ## Design Highlights
 
@@ -23,13 +23,13 @@ DeltaxApi is an asynchronous, edge-first REST API built with Hono and deployed o
 Optimized for V8 isolates with minimal memory overhead, parsing remote HTML via Cheerio and returning strictly typed, validated JSON structures.
 
 ### 2. Multi-Host Stream Resolution
-Resolves raw video iframe embed URLs into playable direct media streams (such as Ok.ru multi-quality MP4s, Dailymotion master HLS `.m3u8` playlists, and unpacked P.A.C.K.E.R. sources).
+Resolves raw video iframe embed URLs and streaming file endpoints into playable direct media streams (such as DramaID direct MP4 streams, Ok.ru multi-quality MP4s, Dailymotion master HLS `.m3u8` playlists, and unpacked P.A.C.K.E.R. sources).
 
 ### 3. Integrated Interactive Scalar Docs
-Serves an interactive Scalar API reference at `/docs` (using the `moon` theme) driven by an OpenAPI 3.1.0 specification exposed at `/openapi.json`. Browsers visiting the root URL are automatically redirected to the interactive documentation.
+Serves an interactive Scalar API reference at `/docs` (using custom champagne theme) driven by an OpenAPI 3.1.0 specification exposed at `/openapi.json`. Browsers visiting the root URL are automatically redirected to the interactive documentation.
 
 ### 4. Non-Unified Provider Routing
-Direct, unpolluted data arrays per provider at `/v1/:provider/search` and dedicated namespace routes (`/v1/animexin/*`), avoiding ambiguous multi-source payloads.
+Direct, unpolluted data arrays per provider at `/v1/:provider/search` and dedicated namespace routes (`/v1/animexin/*`, `/v1/dramaid/*`), avoiding ambiguous multi-source payloads.
 
 ## Quickstart
 
@@ -74,6 +74,20 @@ npm run deploy
 | `GET`  | `/v1/animexin/schedule` | Weekly release schedule |
 | `GET`  | `/v1/animexin/genres` | Available genre categories |
 | `GET`  | `/v1/animexin/genre/:slug?page=:page` | Browse series by genre |
+
+### DramaID (`/v1/dramaid`)
+
+| Method | Endpoint | Description |
+| :----- | :------- | :---------- |
+| `GET`  | `/v1/dramaid/latest?page=:page` | Paginated latest released drama episodes & series |
+| `GET`  | `/v1/dramaid/popular?page=:page` | Popular / trending Asian dramas |
+| `GET`  | `/v1/dramaid/search?q=:query&page=:page` | Search Asian dramas by keyword |
+| `GET`  | `/v1/dramaid/detail/:slug` | Series synopsis, cast, genres, country, and episode links |
+| `GET`  | `/v1/dramaid/episode/:dramaSlug/:episodeSlug` | Direct MP4 streams, proxies, multi-quality downloads |
+| `GET`  | `/v1/dramaid/genres` | Available drama genres |
+| `GET`  | `/v1/dramaid/genre/:slug?page=:page` | Browse dramas by genre |
+| `GET`  | `/v1/dramaid/countries` | Available country categories (Korea, China, Japan, etc.) |
+| `GET`  | `/v1/dramaid/country/:slug?page=:page` | Browse dramas by country |
 
 ### Stream Extraction & Proxy
 

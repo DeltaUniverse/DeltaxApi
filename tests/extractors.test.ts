@@ -44,8 +44,8 @@ test('Dailymotion Extractor: extracts HLS stream from video ID or nunadrama', as
 });
 
 test('Unified extractUrl: routes correctly to extractors', async () => {
-  const okruStreams = await extractUrl('https://ok.ru/videoembed/16247866329778');
-  assert.ok(okruStreams.length > 0);
+  const dmStreams = await extractUrl('https://geo.dailymotion.com/player/xhojl.html?video=k1H9W4v19hY8L0M4G18');
+  assert.ok(dmStreams.length > 0);
 
   const direct = await extractUrl('https://example.com/video.m3u8');
   assert.equal(direct.length, 1);

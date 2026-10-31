@@ -4,7 +4,7 @@ export const openApiDocument = {
     title: 'DeltaxApi',
     version: '1.0.0',
     description:
-      'High-performance asynchronous Donghua & Anime Scraper API for **Animexin.dev**, direct video stream extractors, and media proxy, deployed on Cloudflare Workers edge runtime.',
+      'High-performance asynchronous Anime, Donghua & Asian Drama Scraper API for **Animexin.dev** and **DramaID (dramaid.nimegami.id)**, direct video stream extractors, and media proxy, deployed on Cloudflare Workers edge runtime.',
     contact: {
       name: 'DeltaX Support',
       url: 'https://t.me/DeltaDiscuss',
@@ -31,6 +31,10 @@ export const openApiDocument = {
     {
       name: 'Animexin',
       description: 'Anime & Donghua endpoints scraped from animexin.dev',
+    },
+    {
+      name: 'DramaID',
+      description: 'Asian Drama & Movie endpoints scraped from dramaid.nimegami.id',
     },
     {
       name: 'Extractors',
@@ -469,6 +473,411 @@ export const openApiDocument = {
         },
       },
     },
+    '/v1/dramaid/latest': {
+      get: {
+        tags: ['DramaID'],
+        summary: 'Get Latest Drama Releases',
+        description: 'Fetches paginated latest released Asian drama episodes and series from DramaID.',
+        parameters: [
+          {
+            name: 'page',
+            in: 'query',
+            description: 'Page number for pagination',
+            required: false,
+            schema: {
+              type: 'integer',
+              default: 1,
+              minimum: 1,
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'List of latest released dramas',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/DramaListResponse',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/v1/dramaid/popular': {
+      get: {
+        tags: ['DramaID'],
+        summary: 'Get Popular Dramas',
+        description: 'Fetches paginated popular / trending Asian dramas.',
+        parameters: [
+          {
+            name: 'page',
+            in: 'query',
+            description: 'Page number for pagination',
+            required: false,
+            schema: {
+              type: 'integer',
+              default: 1,
+              minimum: 1,
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'List of popular dramas',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/DramaListResponse',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/v1/dramaid/trending': {
+      get: {
+        tags: ['DramaID'],
+        summary: 'Popular Dramas Alias',
+        description: 'Alias for /v1/dramaid/popular.',
+        parameters: [
+          {
+            name: 'page',
+            in: 'query',
+            description: 'Page number for pagination',
+            required: false,
+            schema: {
+              type: 'integer',
+              default: 1,
+              minimum: 1,
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'List of popular dramas',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/DramaListResponse',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/v1/dramaid/search': {
+      get: {
+        tags: ['DramaID'],
+        summary: 'Search Asian Dramas',
+        description: 'Searches dramas by title or keyword query.',
+        parameters: [
+          {
+            name: 'q',
+            in: 'query',
+            description: 'Search query keyword',
+            required: true,
+            schema: {
+              type: 'string',
+            },
+          },
+          {
+            name: 'page',
+            in: 'query',
+            description: 'Page number for pagination',
+            required: false,
+            schema: {
+              type: 'integer',
+              default: 1,
+              minimum: 1,
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Matching drama search results',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/DramaListResponse',
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Validation error (e.g. empty search query)',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/v1/dramaid/detail/{slug}': {
+      get: {
+        tags: ['DramaID'],
+        summary: 'Get Drama Details',
+        description: 'Fetches comprehensive metadata for a drama series or movie, including synopsis, genres, cast, year, country, and episode links.',
+        parameters: [
+          {
+            name: 'slug',
+            in: 'path',
+            description: 'Drama slug (e.g. tigers-sniff-the-rose-2026)',
+            required: true,
+            schema: {
+              type: 'string',
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Detailed drama information',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/DramaDetailResponse',
+                },
+              },
+            },
+          },
+          '404': {
+            description: 'Drama not found',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/v1/dramaid/episode/{dramaSlug}/{episodeSlug}': {
+      get: {
+        tags: ['DramaID'],
+        summary: 'Get Episode Video Streams & Downloads',
+        description: 'Resolves playable direct MP4 streams, streaming proxy URLs, multi-quality resolutions, direct BerkasDrive downloads, and episode navigation.',
+        parameters: [
+          {
+            name: 'dramaSlug',
+            in: 'path',
+            description: 'Drama series slug (e.g. tigers-sniff-the-rose-2026)',
+            required: true,
+            schema: {
+              type: 'string',
+            },
+          },
+          {
+            name: 'episodeSlug',
+            in: 'path',
+            description: 'Episode slug (e.g. episode-1)',
+            required: true,
+            schema: {
+              type: 'string',
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Episode video streams, downloads, and navigation',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/DramaEpisodeResponse',
+                },
+              },
+            },
+          },
+          '404': {
+            description: 'Episode not found',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/v1/dramaid/episode/{slug}': {
+      get: {
+        tags: ['DramaID'],
+        summary: 'Get Episode Video Streams (Single Slug / URL)',
+        description: 'Resolves episode streams using combined slug or full episode URL query parameter.',
+        parameters: [
+          {
+            name: 'slug',
+            in: 'path',
+            description: 'Combined drama and episode slug (e.g. tigers-sniff-the-rose-2026/episode-1)',
+            required: true,
+            schema: {
+              type: 'string',
+            },
+          },
+          {
+            name: 'url',
+            in: 'query',
+            description: 'Full DramaID episode URL (optional fallback)',
+            required: false,
+            schema: {
+              type: 'string',
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Episode video streams, downloads, and navigation',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/DramaEpisodeResponse',
+                },
+              },
+            },
+          },
+          '404': {
+            description: 'Episode not found',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/v1/dramaid/genres': {
+      get: {
+        tags: ['DramaID'],
+        summary: 'Get Drama Genres',
+        description: 'Returns all available drama genres categories.',
+        responses: {
+          '200': {
+            description: 'List of drama genres',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/GenresResponse',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/v1/dramaid/genre/{slug}': {
+      get: {
+        tags: ['DramaID'],
+        summary: 'Get Dramas by Genre',
+        description: 'Browse paginated dramas under a specific genre category.',
+        parameters: [
+          {
+            name: 'slug',
+            in: 'path',
+            description: 'Genre slug (e.g. romance, comedy, thriller)',
+            required: true,
+            schema: {
+              type: 'string',
+            },
+          },
+          {
+            name: 'page',
+            in: 'query',
+            description: 'Page number for pagination',
+            required: false,
+            schema: {
+              type: 'integer',
+              default: 1,
+              minimum: 1,
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Dramas in this genre',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/DramaListResponse',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/v1/dramaid/countries': {
+      get: {
+        tags: ['DramaID'],
+        summary: 'Get Drama Countries',
+        description: 'Returns all available country categories (e.g. South Korea, China, Japan).',
+        responses: {
+          '200': {
+            description: 'List of drama countries',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/CountriesResponse',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/v1/dramaid/country/{slug}': {
+      get: {
+        tags: ['DramaID'],
+        summary: 'Get Dramas by Country',
+        description: 'Browse paginated dramas filtered by country of origin.',
+        parameters: [
+          {
+            name: 'slug',
+            in: 'path',
+            description: 'Country slug (e.g. south-korea, china, japan)',
+            required: true,
+            schema: {
+              type: 'string',
+            },
+          },
+          {
+            name: 'page',
+            in: 'query',
+            description: 'Page number for pagination',
+            required: false,
+            schema: {
+              type: 'integer',
+              default: 1,
+              minimum: 1,
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Dramas in this country',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/DramaListResponse',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     '/v1/extract': {
       get: {
         tags: ['Extractors'],
@@ -593,7 +1002,6 @@ export const openApiDocument = {
         properties: {
           title: { type: 'string', example: 'Renegade Immortal' },
           slug: { type: 'string', example: 'renegade-immortal' },
-          url: { type: 'string', example: 'https://animexin.dev/renegade-immortal/' },
           thumbnail: { type: 'string', example: 'https://animexin.dev/wp-content/uploads/2023/09/Renegade-Immortal-Ascendant.jpg' },
           type: { type: 'string', example: 'Donghua' },
           status: { type: 'string', example: 'Ongoing' },
@@ -602,7 +1010,7 @@ export const openApiDocument = {
           rating: { type: 'string', example: '9.2' },
           episodeTitle: { type: 'string', example: 'Renegade Immortal Episode 164' },
         },
-        required: ['title', 'slug', 'url', 'thumbnail'],
+        required: ['title', 'slug', 'thumbnail'],
       },
       AnimeListResponse: {
         type: 'object',
@@ -638,7 +1046,6 @@ export const openApiDocument = {
             properties: {
               title: { type: 'string', example: 'Renegade Immortal' },
               slug: { type: 'string', example: 'renegade-immortal' },
-              url: { type: 'string', example: 'https://animexin.dev/renegade-immortal/' },
               thumbnail: { type: 'string' },
               rating: { type: 'string', example: '9.3' },
               synopsis: { type: 'string' },
@@ -660,7 +1067,6 @@ export const openApiDocument = {
                     episodeNumber: { type: 'string' },
                     releaseDate: { type: 'string' },
                     slug: { type: 'string' },
-                    url: { type: 'string' },
                   },
                 },
               },
@@ -680,7 +1086,6 @@ export const openApiDocument = {
             properties: {
               title: { type: 'string' },
               slug: { type: 'string' },
-              url: { type: 'string' },
               animeSlug: { type: 'string' },
               animeTitle: { type: 'string' },
               defaultStream: { type: 'string', nullable: true },
@@ -733,7 +1138,6 @@ export const openApiDocument = {
                 properties: {
                   title: { type: 'string' },
                   slug: { type: 'string' },
-                  url: { type: 'string' },
                   time: { type: 'string' },
                   episode: { type: 'string' },
                 },
@@ -756,7 +1160,6 @@ export const openApiDocument = {
               properties: {
                 name: { type: 'string', example: 'Action' },
                 slug: { type: 'string', example: 'action' },
-                url: { type: 'string' },
               },
             },
           },
@@ -790,6 +1193,217 @@ export const openApiDocument = {
                   type: 'object',
                   additionalProperties: { type: 'string' },
                 },
+              },
+            },
+          },
+          powered_by: { type: 'string', example: 'deltax' },
+          support_chat: { type: 'string', example: 'https://t.me/DeltaDiscuss' },
+        },
+      },
+      DramaItem: {
+        type: 'object',
+        properties: {
+          title: { type: 'string', example: 'Tigers Sniff the Rose' },
+          slug: { type: 'string', example: 'tigers-sniff-the-rose-2026' },
+          thumbnail: { type: 'string', example: 'https://dramaid.nimegami.id/media/covers/4986.jpg' },
+          country: { type: 'string', example: 'China' },
+          year: { type: 'string', example: '2026' },
+          genre: { type: 'string', example: 'Historical' },
+          latestEpisode: { type: 'string', example: 'EP 18' },
+          availability: { type: 'string', example: '17 episode tersedia' },
+          subType: { type: 'string', example: 'SUB INDO' },
+          status: { type: 'string', example: 'Ongoing' },
+          type: { type: 'string', example: 'Series' },
+        },
+        required: ['title', 'slug', 'thumbnail'],
+      },
+      DramaListResponse: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', example: 'success' },
+          statusCode: { type: 'integer', example: 200 },
+          meta: {
+            type: 'object',
+            properties: {
+              page: { type: 'integer', example: 1 },
+              hasNextPage: { type: 'boolean', example: true },
+              totalResults: { type: 'integer', example: 24 },
+              provider: { type: 'string', example: 'dramaid.nimegami.id' },
+            },
+          },
+          data: {
+            type: 'array',
+            items: {
+              $ref: '#/components/schemas/DramaItem',
+            },
+          },
+          powered_by: { type: 'string', example: 'deltax' },
+          support_chat: { type: 'string', example: 'https://t.me/DeltaDiscuss' },
+        },
+      },
+      DramaDetailResponse: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', example: 'success' },
+          statusCode: { type: 'integer', example: 200 },
+          meta: {
+            type: 'object',
+            properties: {
+              provider: { type: 'string', example: 'dramaid.nimegami.id' },
+            },
+          },
+          data: {
+            type: 'object',
+            properties: {
+              title: { type: 'string', example: 'Tigers Sniff the Rose' },
+              alternateTitle: { type: 'string' },
+              slug: { type: 'string', example: 'tigers-sniff-the-rose-2026' },
+              thumbnail: { type: 'string' },
+              synopsis: { type: 'string' },
+              year: { type: 'string', example: '2026' },
+              country: { type: 'string', example: 'China' },
+              format: { type: 'string', example: 'Series' },
+              status: { type: 'string', example: 'Available' },
+              totalEpisodes: { type: 'integer', example: 40 },
+              genres: {
+                type: 'array',
+                items: { type: 'string' },
+              },
+              cast: {
+                type: 'array',
+                items: { type: 'string' },
+              },
+              episodes: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    title: { type: 'string', example: 'Episode 1' },
+                    episodeNumber: { type: 'string', example: '1' },
+                    slug: { type: 'string', example: 'tigers-sniff-the-rose-2026/episode-1' },
+                  },
+                },
+              },
+            },
+          },
+          powered_by: { type: 'string', example: 'deltax' },
+          support_chat: { type: 'string', example: 'https://t.me/DeltaDiscuss' },
+        },
+      },
+      DramaEpisodeResponse: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', example: 'success' },
+          statusCode: { type: 'integer', example: 200 },
+          meta: {
+            type: 'object',
+            properties: {
+              provider: { type: 'string', example: 'dramaid.nimegami.id' },
+            },
+          },
+          data: {
+            type: 'object',
+            properties: {
+              title: { type: 'string' },
+              slug: { type: 'string', example: 'tigers-sniff-the-rose-2026/episode-1' },
+              dramaTitle: { type: 'string', example: 'Tigers Sniff the Rose' },
+              dramaSlug: { type: 'string', example: 'tigers-sniff-the-rose-2026' },
+              currentEpisode: { type: 'string', example: '1' },
+              defaultPlayer: { type: 'string', nullable: true },
+              streams: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    server: { type: 'string', example: 'DramaID' },
+                    quality: { type: 'string', example: '720p' },
+                    url: { type: 'string' },
+                    proxyUrl: { type: 'string' },
+                    type: { type: 'string', example: 'video/mp4' },
+                    headers: {
+                      type: 'object',
+                      additionalProperties: { type: 'string' },
+                    },
+                  },
+                },
+              },
+              servers: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    server: { type: 'string', example: 'DramaID - 720p' },
+                    url: { type: 'string' },
+                  },
+                },
+              },
+              downloads: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    resolution: { type: 'string', example: '720p (369 MB)' },
+                    links: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          server: { type: 'string', example: 'BerkasDrive Direct' },
+                          url: { type: 'string' },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+              navigation: {
+                type: 'object',
+                properties: {
+                  prev: {
+                    type: 'object',
+                    properties: {
+                      slug: { type: 'string' },
+                    },
+                  },
+                  next: {
+                    type: 'object',
+                    properties: {
+                      slug: { type: 'string' },
+                    },
+                  },
+                  allEpisodes: {
+                    type: 'object',
+                    properties: {
+                      slug: { type: 'string' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          powered_by: { type: 'string', example: 'deltax' },
+          support_chat: { type: 'string', example: 'https://t.me/DeltaDiscuss' },
+        },
+      },
+      CountriesResponse: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', example: 'success' },
+          statusCode: { type: 'integer', example: 200 },
+          meta: {
+            type: 'object',
+            properties: {
+              provider: { type: 'string', example: 'dramaid.nimegami.id' },
+              totalResults: { type: 'integer', example: 10 },
+            },
+          },
+          data: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                name: { type: 'string', example: 'South Korea' },
+                slug: { type: 'string', example: 'south-korea' },
               },
             },
           },

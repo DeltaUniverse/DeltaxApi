@@ -201,23 +201,13 @@ h6,
   background-color: #d8b67d !important;
 }
 
-/* Sembunyikan tombol download dan client button */
+/* Sembunyikan tombol download */
 .download-container,
 .download-button,
 .download-link,
 [aria-label*="download" i],
 [aria-label*="unduh" i],
-button:has([data-icon="download"]),
-.show-api-client-button,
-.open-api-client-button,
-.client-button,
-.scalar-client,
-.scalar-api-client,
-[aria-label*="client" i],
-[aria-label*="test request" i],
-button:has(.show-api-client-button),
-.show-api-client-button-wrapper,
-.open-api-client-button-wrapper {
+button:has([data-icon="download"]) {
   display: none !important;
 }
 `;

@@ -67,7 +67,6 @@ export class AnimexinScraper {
         items.push({
           title,
           slug,
-          url: normalizeUrl(href, ANIMEXIN_BASE_URL),
           thumbnail: normalizeUrl(thumbnail, ANIMEXIN_BASE_URL),
           type: $(el).find('.typez').text().trim() || undefined,
           status: $(el).find('.status').text().trim() || undefined,
@@ -115,7 +114,6 @@ export class AnimexinScraper {
           items.push({
             title,
             slug,
-            url: normalizeUrl(href, ANIMEXIN_BASE_URL),
             thumbnail: normalizeUrl(thumbnail, ANIMEXIN_BASE_URL),
             type: $(el).find('.typez').text().trim() || 'Donghua',
             status: $(el).find('.status').text().trim() || 'Ongoing',
@@ -158,7 +156,6 @@ export class AnimexinScraper {
         items.push({
           title,
           slug,
-          url: normalizeUrl(href, ANIMEXIN_BASE_URL),
           thumbnail: normalizeUrl(thumbnail, ANIMEXIN_BASE_URL),
           type: $(el).find('.typez').text().trim() || 'Donghua',
           status: $(el).find('.status').text().trim() || 'Ongoing',
@@ -205,7 +202,6 @@ export class AnimexinScraper {
         items.push({
           title,
           slug,
-          url: normalizeUrl(href, ANIMEXIN_BASE_URL),
           thumbnail: normalizeUrl(thumbnail, ANIMEXIN_BASE_URL),
           type: $(el).find('.typez').text().trim() || undefined,
           status: $(el).find('.status').text().trim() || undefined,
@@ -304,7 +300,6 @@ export class AnimexinScraper {
           episodeNumber: epNum,
           releaseDate: epDate,
           slug: extractSlug(epHref),
-          url: normalizeUrl(epHref, ANIMEXIN_BASE_URL),
         });
       }
     });
@@ -316,7 +311,6 @@ export class AnimexinScraper {
     return {
       title,
       slug: extractSlug(targetUrl),
-      url: targetUrl,
       thumbnail: normalizeUrl(thumbnail, ANIMEXIN_BASE_URL),
       rating: rating || undefined,
       synopsis,
@@ -419,21 +413,14 @@ export class AnimexinScraper {
     return {
       title,
       slug: extractSlug(targetUrl),
-      url: targetUrl,
       defaultPlayer: defaultIframe ? normalizeUrl(defaultIframe, ANIMEXIN_BASE_URL) : undefined,
       servers,
       streams,
       downloads,
       navigation: {
-        prev: prevHref
-          ? { slug: extractSlug(prevHref), url: normalizeUrl(prevHref, ANIMEXIN_BASE_URL) }
-          : undefined,
-        next: nextHref
-          ? { slug: extractSlug(nextHref), url: normalizeUrl(nextHref, ANIMEXIN_BASE_URL) }
-          : undefined,
-        allEpisodes: allHrefs
-          ? { slug: extractSlug(allHrefs), url: normalizeUrl(allHrefs, ANIMEXIN_BASE_URL) }
-          : undefined,
+        prev: prevHref ? { slug: extractSlug(prevHref) } : undefined,
+        next: nextHref ? { slug: extractSlug(nextHref) } : undefined,
+        allEpisodes: allHrefs ? { slug: extractSlug(allHrefs) } : undefined,
       },
     };
   }
@@ -450,7 +437,7 @@ export class AnimexinScraper {
 
     $('.listSchh').each((_, el) => {
       const day = $(el).find('h2').text().trim();
-      const animeList: Array<{ title: string; slug: string; url: string }> = [];
+      const animeList: Array<{ title: string; slug: string }> = [];
 
       $(el).find('.subSchh a').each((_, a) => {
         const title = $(a).text().trim();
@@ -459,7 +446,6 @@ export class AnimexinScraper {
           animeList.push({
             title,
             slug: extractSlug(href),
-            url: normalizeUrl(href, ANIMEXIN_BASE_URL),
           });
         }
       });
@@ -493,7 +479,6 @@ export class AnimexinScraper {
         genres.push({
           name,
           slug,
-          url: normalizeUrl(href, ANIMEXIN_BASE_URL),
         });
       }
     });
@@ -535,7 +520,6 @@ export class AnimexinScraper {
         items.push({
           title,
           slug,
-          url: normalizeUrl(href, ANIMEXIN_BASE_URL),
           thumbnail: normalizeUrl(thumbnail, ANIMEXIN_BASE_URL),
           type: $(el).find('.typez').text().trim() || undefined,
           status: $(el).find('.status').text().trim() || undefined,

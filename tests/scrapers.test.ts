@@ -11,7 +11,6 @@ test('AnimexinScraper: getLatest returns parsed anime items', async () => {
   const first = res.items[0];
   assert.ok(first.title);
   assert.ok(first.slug);
-  assert.ok(first.url.startsWith('https://animexin.dev'));
 });
 
 test('AnimexinScraper: search returns matching items', async () => {

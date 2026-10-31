@@ -4,8 +4,10 @@ import { logger } from 'hono/logger';
 import { Scalar } from '@scalar/hono-api-reference';
 import { healthRoute } from './routes/health.ts';
 import { animexinRoute } from './routes/animexin.ts';
+import { dramaidRoute } from './routes/dramaid.ts';
 import { streamRoute } from './routes/stream.ts';
 import { AnimexinScraper } from './scrapers/animexin.ts';
+import { DramaIdScraper } from './scrapers/dramaid.ts';
 import { extractUrl } from './extractors/index.ts';
 import { sendSuccess, sendError } from './utils/response.ts';
 import { edgeCache } from './utils/cache.ts';
@@ -21,23 +23,28 @@ app.use('*', logger());
 
 // Scalar Champagne Theme Configuration
 const scalarChampagneConfig = {
-  document: openApiDocument,
+  spec: {
+    content: openApiDocument,
+  },
   pageTitle: 'DeltaxApi - Interactive API Reference',
   theme: 'none' as const,
   layout: 'modern' as const,
   customCss: champagneCustomCss,
   documentDownloadType: 'none' as const,
   hideDownloadButton: true,
-  hideTestRequestButton: true,
+  hideTestRequestButton: false,
   withDefaultFonts: false,
 };
 
 // Interactive Scalar API Documentation
-app.route('/docs', Scalar.serve(scalarChampagneConfig));
-app.route('/reference', Scalar.serve(scalarChampagneConfig));
+app.get('/docs', Scalar(scalarChampagneConfig));
+app.get('/docs/', (c) => c.redirect('/docs'));
+app.get('/reference', Scalar(scalarChampagneConfig));
+app.get('/reference/', (c) => c.redirect('/reference'));
 
-// Global raw OpenAPI 3.1 JSON specification
+// Global raw OpenAPI 3.1 JSON specifications
 app.get('/openapi.json', edgeCache({ ttl: 3600 }), (c) => c.json(openApiDocument));
+app.get('/docs/openapi.json', edgeCache({ ttl: 3600 }), (c) => c.json(openApiDocument));
 
 // Root endpoint: API documentation & metadata (or redirect browser to Scalar)
 app.get('/', (c) => {
@@ -48,7 +55,7 @@ app.get('/', (c) => {
 
   return sendSuccess(c, {
     name: 'DeltaxApi',
-    description: 'Donghua & Anime Scraper API for Animexin.dev',
+    description: 'Donghua & Anime Scraper API for Animexin.dev and Asian Drama Scraper API for DramaID (dramaid.nimegami.id)',
     domain: 'api.deltax.bond',
     version: '1.0.0',
     documentation: {
@@ -58,7 +65,7 @@ app.get('/', (c) => {
       health: ['GET /v1/health', 'GET /health'],
       streamProxy: 'GET /v1/stream/proxy?url=:mediaUrl&referer=:referer',
       extractor: 'GET /v1/extract?url=:videoEmbedUrl',
-      search: 'GET /v1/:provider/search?q=:query&page=:page (e.g. /v1/animexin/search)',
+      search: 'GET /v1/:provider/search?q=:query&page=:page (e.g. /v1/animexin/search, /v1/dramaid/search)',
       animexin: {
         popular: 'GET /v1/animexin/popular?page=:page',
         trending: 'GET /v1/animexin/trending?page=:page',
@@ -70,6 +77,18 @@ app.get('/', (c) => {
         genres: 'GET /v1/animexin/genres',
         byGenre: 'GET /v1/animexin/genre/:slug?page=:page',
       },
+      dramaid: {
+        popular: 'GET /v1/dramaid/popular?page=:page',
+        trending: 'GET /v1/dramaid/trending?page=:page',
+        latest: 'GET /v1/dramaid/latest?page=:page',
+        search: 'GET /v1/dramaid/search?q=:query&page=:page',
+        detail: 'GET /v1/dramaid/detail/:slug',
+        episode: 'GET /v1/dramaid/episode/:dramaSlug/:episodeSlug',
+        genres: 'GET /v1/dramaid/genres',
+        byGenre: 'GET /v1/dramaid/genre/:slug?page=:page',
+        countries: 'GET /v1/dramaid/countries',
+        byCountry: 'GET /v1/dramaid/country/:slug?page=:page',
+      },
     },
   });
 });
@@ -80,6 +99,7 @@ app.route('/', healthRoute);
 
 // Provider routes
 app.route('/v1/animexin', animexinRoute);
+app.route('/v1/dramaid', dramaidRoute);
 app.route('/v1/stream', streamRoute);
 
 // Dedicated stream extractor endpoint: GET /v1/extract?url=...
@@ -103,6 +123,7 @@ app.get('/v1/extract', edgeCache({ ttl: 600 }), async (c) => {
 
 // Provider-based non-unified search
 const animexinScraper = new AnimexinScraper();
+const dramaidScraper = new DramaIdScraper();
 
 async function handleProviderSearch(c: any, provider: string) {
   const parsed = SearchQuerySchema.safeParse(c.req.query());
@@ -129,9 +150,25 @@ async function handleProviderSearch(c: any, provider: string) {
     }
   }
 
+  if (provider === 'dramaid') {
+    try {
+      const res = await dramaidScraper.search(query, page);
+      return sendSuccess(c, res.items, {
+        provider: 'dramaid.nimegami.id',
+        query,
+        page,
+        hasNextPage: res.hasNextPage,
+        totalResults: res.items.length,
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to search DramaID';
+      return sendError(c, msg, 500);
+    }
+  }
+
   return sendError(
     c,
-    `Unknown provider "${provider}". Supported providers: animexin. Example: /v1/animexin/search?q=${encodeURIComponent(query)}`,
+    `Unknown provider "${provider}". Supported providers: animexin, dramaid. Example: /v1/dramaid/search?q=${encodeURIComponent(query)}`,
     400
   );
 }

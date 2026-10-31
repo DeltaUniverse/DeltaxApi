@@ -47,6 +47,22 @@ export async function extractUrl(url: string): Promise<StreamSource[]> {
     fullUrl.includes('dood')
   ) {
     streams = await extractPlaymogo(fullUrl);
+  } else if (
+    fullUrl.includes('dramaid.nimegami.id/api/v1/files/') ||
+    fullUrl.includes('berkasdrive.com/stream/')
+  ) {
+    streams = [
+      {
+        server: 'DramaID',
+        quality: 'Auto',
+        url: fullUrl,
+        proxyUrl: `/v1/stream/proxy?url=${encodeURIComponent(fullUrl)}&referer=${encodeURIComponent('https://dramaid.nimegami.id/')}`,
+        type: 'video/mp4',
+        headers: {
+          Referer: 'https://dramaid.nimegami.id/',
+        },
+      },
+    ];
   } else if (fullUrl.includes('.m3u8') || fullUrl.includes('.mp4')) {
     const isM3u8 = fullUrl.includes('.m3u8');
     streams = [

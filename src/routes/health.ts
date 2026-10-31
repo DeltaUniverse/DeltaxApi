@@ -13,6 +13,6 @@ healthRoute.get('/health', (c) => {
     timestamp: new Date().toISOString(),
     service: 'DeltaxApi',
     version: '1.0.0',
-    providers: ['animexin.dev', 'dramaid.nimegami.id'],
+    providers: ['animexin.dev', 'dramaid.nimegami.id', 'nimegami.id'],
   });
 });

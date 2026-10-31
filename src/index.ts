@@ -5,9 +5,11 @@ import { Scalar } from '@scalar/hono-api-reference';
 import { healthRoute } from './routes/health.ts';
 import { animexinRoute } from './routes/animexin.ts';
 import { dramaidRoute } from './routes/dramaid.ts';
+import { nimegamiRoute } from './routes/nimegami.ts';
 import { streamRoute } from './routes/stream.ts';
 import { AnimexinScraper } from './scrapers/animexin.ts';
 import { DramaIdScraper } from './scrapers/dramaid.ts';
+import { NimegamiScraper } from './scrapers/nimegami.ts';
 import { extractUrl } from './extractors/index.ts';
 import { sendSuccess, sendError } from './utils/response.ts';
 import { edgeCache } from './utils/cache.ts';
@@ -55,7 +57,7 @@ app.get('/', (c) => {
 
   return sendSuccess(c, {
     name: 'DeltaxApi',
-    description: 'Donghua & Anime Scraper API for Animexin.dev and Asian Drama Scraper API for DramaID (dramaid.nimegami.id)',
+    description: 'Anime & Donghua Scraper API for Animexin.dev and Nimegami.id, and Asian Drama Scraper API for DramaID (dramaid.nimegami.id)',
     domain: 'api.deltax.bond',
     version: '1.0.0',
     documentation: {
@@ -65,7 +67,7 @@ app.get('/', (c) => {
       health: ['GET /v1/health', 'GET /health'],
       streamProxy: 'GET /v1/stream/proxy?url=:mediaUrl&referer=:referer',
       extractor: 'GET /v1/extract?url=:videoEmbedUrl',
-      search: 'GET /v1/:provider/search?q=:query&page=:page (e.g. /v1/animexin/search, /v1/dramaid/search)',
+      search: 'GET /v1/:provider/search?q=:query&page=:page (e.g. /v1/animexin/search, /v1/dramaid/search, /v1/nimegami/search)',
       animexin: {
         popular: 'GET /v1/animexin/popular?page=:page',
         trending: 'GET /v1/animexin/trending?page=:page',
@@ -89,6 +91,17 @@ app.get('/', (c) => {
         countries: 'GET /v1/dramaid/countries',
         byCountry: 'GET /v1/dramaid/country/:slug?page=:page',
       },
+      nimegami: {
+        popular: 'GET /v1/nimegami/popular?page=:page',
+        trending: 'GET /v1/nimegami/trending?page=:page',
+        latest: 'GET /v1/nimegami/latest?page=:page',
+        search: 'GET /v1/nimegami/search?q=:query&page=:page',
+        detail: 'GET /v1/nimegami/detail/:slug',
+        episode: 'GET /v1/nimegami/episode/:animeSlug/:episodeSlug',
+        genres: 'GET /v1/nimegami/genres',
+        byGenre: 'GET /v1/nimegami/genre/:slug?page=:page',
+        batch: 'GET /v1/nimegami/batch/:slug',
+      },
     },
   });
 });
@@ -100,6 +113,7 @@ app.route('/', healthRoute);
 // Provider routes
 app.route('/v1/animexin', animexinRoute);
 app.route('/v1/dramaid', dramaidRoute);
+app.route('/v1/nimegami', nimegamiRoute);
 app.route('/v1/stream', streamRoute);
 
 // Dedicated stream extractor endpoint: GET /v1/extract?url=...
@@ -124,6 +138,7 @@ app.get('/v1/extract', edgeCache({ ttl: 600 }), async (c) => {
 // Provider-based non-unified search
 const animexinScraper = new AnimexinScraper();
 const dramaidScraper = new DramaIdScraper();
+const nimegamiScraper = new NimegamiScraper();
 
 async function handleProviderSearch(c: any, provider: string) {
   const parsed = SearchQuerySchema.safeParse(c.req.query());
@@ -166,9 +181,25 @@ async function handleProviderSearch(c: any, provider: string) {
     }
   }
 
+  if (provider === 'nimegami') {
+    try {
+      const res = await nimegamiScraper.search(query, page);
+      return sendSuccess(c, res.items, {
+        provider: 'nimegami.id',
+        query,
+        page,
+        hasNextPage: res.hasNextPage,
+        totalResults: res.items.length,
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to search Nimegami';
+      return sendError(c, msg, 500);
+    }
+  }
+
   return sendError(
     c,
-    `Unknown provider "${provider}". Supported providers: animexin, dramaid. Example: /v1/dramaid/search?q=${encodeURIComponent(query)}`,
+    `Unknown provider "${provider}". Supported providers: animexin, dramaid, nimegami. Example: /v1/nimegami/search?q=${encodeURIComponent(query)}`,
     400
   );
 }

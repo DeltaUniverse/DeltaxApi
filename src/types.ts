@@ -55,7 +55,7 @@ export interface AnimeDetail {
   episodes: Array<{
     title: string;
     episodeNumber: string;
-    releaseDate: string;
+    releaseDate?: string;
     slug: string;
   }>;
 }

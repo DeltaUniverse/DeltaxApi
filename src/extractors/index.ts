@@ -63,6 +63,22 @@ export async function extractUrl(url: string): Promise<StreamSource[]> {
         },
       },
     ];
+  } else if (
+    fullUrl.includes('stream-stor.berkasdrive.com') ||
+    fullUrl.includes('nimegami.id/streaming/')
+  ) {
+    streams = [
+      {
+        server: 'Nimegami',
+        quality: 'Auto',
+        url: fullUrl,
+        proxyUrl: `/v1/stream/proxy?url=${encodeURIComponent(fullUrl)}&referer=${encodeURIComponent('https://nimegami.id/')}`,
+        type: 'video/mp4',
+        headers: {
+          Referer: 'https://nimegami.id/',
+        },
+      },
+    ];
   } else if (fullUrl.includes('.m3u8') || fullUrl.includes('.mp4')) {
     const isM3u8 = fullUrl.includes('.m3u8');
     streams = [

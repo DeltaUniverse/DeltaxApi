@@ -30,11 +30,11 @@ function inferReferer(url: string, explicitReferer?: string): string {
   ) {
     return 'https://animexin.dev/';
   }
-  if (
-    lower.includes('dramaid.nimegami.id') ||
-    lower.includes('berkasdrive.com')
-  ) {
+  if (lower.includes('dramaid.nimegami.id')) {
     return 'https://dramaid.nimegami.id/';
+  }
+  if (lower.includes('nimegami.id') || lower.includes('berkasdrive.com')) {
+    return 'https://nimegami.id/';
   }
   return '';
 }

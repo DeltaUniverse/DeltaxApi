@@ -2,7 +2,7 @@
 
 # DeltaxApi
 
-**Edge-native Anime, Donghua & Asian Drama Scraper API for Animexin and DramaID, featuring multi-host video stream extractors and interactive Scalar documentation.**
+**Edge-native Anime, Donghua & Asian Drama Scraper API for Animexin, Nimegami, and DramaID, featuring multi-host video stream extractors and interactive Scalar documentation.**
 
 [![Runtime](https://img.shields.io/badge/Runtime-Cloudflare_Workers-F38020?logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
 [![Framework](https://img.shields.io/badge/Framework-Hono_v4-E36002?logo=hono&logoColor=white)](https://hono.dev/)
@@ -74,6 +74,19 @@ npm run deploy
 | `GET`  | `/v1/animexin/schedule` | Weekly release schedule |
 | `GET`  | `/v1/animexin/genres` | Available genre categories |
 | `GET`  | `/v1/animexin/genre/:slug?page=:page` | Browse series by genre |
+
+### Nimegami (`/v1/nimegami`)
+
+| Method | Endpoint | Description |
+| :----- | :------- | :---------- |
+| `GET`  | `/v1/nimegami/latest?page=:page` | Paginated latest released anime episodes |
+| `GET`  | `/v1/nimegami/popular?page=:page` | Popular / trending anime series |
+| `GET`  | `/v1/nimegami/search?q=:query&page=:page` | Search anime by keyword |
+| `GET`  | `/v1/nimegami/detail/:slug` | Anime synopsis, info, genres, and all episode links |
+| `GET`  | `/v1/nimegami/episode/:animeSlug/:episodeSlug` | Direct BerkasDrive MP4 stream, player, and multi-quality downloads |
+| `GET`  | `/v1/nimegami/genres` | Available anime genres |
+| `GET`  | `/v1/nimegami/genre/:slug?page=:page` | Browse anime by genre |
+| `GET`  | `/v1/nimegami/batch/:slug` | Multi-quality batch download mirrors |
 
 ### DramaID (`/v1/dramaid`)
 

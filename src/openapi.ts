@@ -37,6 +37,10 @@ export const openApiDocument = {
       description: 'Asian Drama & Movie endpoints scraped from dramaid.nimegami.id',
     },
     {
+      name: 'Nimegami',
+      description: 'Anime streaming, downloads, and metadata endpoints scraped from nimegami.id',
+    },
+    {
       name: 'Extractors',
       description: 'Direct playable media stream extractors (HLS, MP4)',
     },
@@ -878,6 +882,368 @@ export const openApiDocument = {
         },
       },
     },
+    '/v1/nimegami/latest': {
+      get: {
+        tags: ['Nimegami'],
+        summary: 'Get Latest Anime Releases',
+        description: 'Fetches paginated list of latest updated anime from Nimegami.',
+        parameters: [
+          {
+            name: 'page',
+            in: 'query',
+            description: 'Page number for pagination',
+            required: false,
+            schema: {
+              type: 'integer',
+              default: 1,
+              minimum: 1,
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Successful latest anime list',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/AnimeListResponse',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/v1/nimegami/popular': {
+      get: {
+        tags: ['Nimegami'],
+        summary: 'Get Popular Anime',
+        description: 'Fetches paginated list of popular trending anime from Nimegami.',
+        parameters: [
+          {
+            name: 'page',
+            in: 'query',
+            description: 'Page number for pagination',
+            required: false,
+            schema: {
+              type: 'integer',
+              default: 1,
+              minimum: 1,
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Successful popular anime list',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/AnimeListResponse',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/v1/nimegami/trending': {
+      get: {
+        tags: ['Nimegami'],
+        summary: 'Get Trending Anime',
+        description: 'Alias for /v1/nimegami/popular.',
+        parameters: [
+          {
+            name: 'page',
+            in: 'query',
+            description: 'Page number for pagination',
+            required: false,
+            schema: {
+              type: 'integer',
+              default: 1,
+              minimum: 1,
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Successful trending anime list',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/AnimeListResponse',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/v1/nimegami/search': {
+      get: {
+        tags: ['Nimegami'],
+        summary: 'Search Anime',
+        description: 'Searches anime by title keyword from Nimegami.',
+        parameters: [
+          {
+            name: 'q',
+            in: 'query',
+            description: 'Search query keyword',
+            required: true,
+            schema: {
+              type: 'string',
+              example: 'one punch',
+            },
+          },
+          {
+            name: 'page',
+            in: 'query',
+            description: 'Page number for pagination',
+            required: false,
+            schema: {
+              type: 'integer',
+              default: 1,
+              minimum: 1,
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Search results from Nimegami',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/AnimeListResponse',
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Invalid search parameters',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/v1/nimegami/detail/{slug}': {
+      get: {
+        tags: ['Nimegami'],
+        summary: 'Get Anime Details',
+        description: 'Fetches anime details, synopsis, info table, and episode list from Nimegami.',
+        parameters: [
+          {
+            name: 'slug',
+            in: 'path',
+            description: 'Anime slug (e.g. mizu-zokusei-no-mahoutsukai-sub-indo, opm-sub-indo)',
+            required: true,
+            schema: {
+              type: 'string',
+              example: 'mizu-zokusei-no-mahoutsukai-sub-indo',
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Full anime details',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/AnimeDetailResponse',
+                },
+              },
+            },
+          },
+          '404': {
+            description: 'Anime not found',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/v1/nimegami/episode/{animeSlug}/{episodeSlug}': {
+      get: {
+        tags: ['Nimegami'],
+        summary: 'Get Episode Video Streams & Downloads',
+        description: 'Fetches playable video streams, downloads, and navigation for a specific episode from Nimegami.',
+        parameters: [
+          {
+            name: 'animeSlug',
+            in: 'path',
+            description: 'Anime slug (e.g. mizu-zokusei-no-mahoutsukai-sub-indo)',
+            required: true,
+            schema: {
+              type: 'string',
+              example: 'mizu-zokusei-no-mahoutsukai-sub-indo',
+            },
+          },
+          {
+            name: 'episodeSlug',
+            in: 'path',
+            description: 'Episode slug or number (e.g. episode-1, 1)',
+            required: true,
+            schema: {
+              type: 'string',
+              example: 'episode-1',
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Episode video streams and download links',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/EpisodeDetailResponse',
+                },
+              },
+            },
+          },
+          '404': {
+            description: 'Episode not found',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/v1/nimegami/genres': {
+      get: {
+        tags: ['Nimegami'],
+        summary: 'Get Anime Genres',
+        description: 'Fetches all anime genre categories available on Nimegami.',
+        responses: {
+          '200': {
+            description: 'List of genres',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/GenresResponse',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/v1/nimegami/genre/{slug}': {
+      get: {
+        tags: ['Nimegami'],
+        summary: 'Get Anime by Genre',
+        description: 'Browse paginated anime filtered by genre category from Nimegami.',
+        parameters: [
+          {
+            name: 'slug',
+            in: 'path',
+            description: 'Genre slug (e.g. action, fantasy, isekai)',
+            required: true,
+            schema: {
+              type: 'string',
+              example: 'action',
+            },
+          },
+          {
+            name: 'page',
+            in: 'query',
+            description: 'Page number for pagination',
+            required: false,
+            schema: {
+              type: 'integer',
+              default: 1,
+              minimum: 1,
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Anime in this genre',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/AnimeListResponse',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/v1/nimegami/batch/{slug}': {
+      get: {
+        tags: ['Nimegami'],
+        summary: 'Get Anime Batch Downloads',
+        description: 'Fetches batch download links and mirror options for a completed anime from Nimegami.',
+        parameters: [
+          {
+            name: 'slug',
+            in: 'path',
+            description: 'Anime slug (e.g. mizu-zokusei-no-mahoutsukai-sub-indo)',
+            required: true,
+            schema: {
+              type: 'string',
+              example: 'mizu-zokusei-no-mahoutsukai-sub-indo',
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Batch download mirrors',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    status: { type: 'string', example: 'success' },
+                    statusCode: { type: 'integer', example: 200 },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        title: { type: 'string' },
+                        slug: { type: 'string' },
+                        downloads: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                            properties: {
+                              resolution: { type: 'string' },
+                              links: {
+                                type: 'array',
+                                items: {
+                                  type: 'object',
+                                  properties: {
+                                    server: { type: 'string' },
+                                    url: { type: 'string' },
+                                  },
+                                },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     '/v1/extract': {
       get: {
         tags: ['Extractors'],
@@ -989,7 +1355,7 @@ export const openApiDocument = {
               providers: {
                 type: 'array',
                 items: { type: 'string' },
-                example: ['animexin.dev'],
+                example: ['animexin.dev', 'dramaid.nimegami.id', 'nimegami.id'],
               },
             },
           },
